@@ -10,6 +10,8 @@ mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 cap = cv2.VideoCapture(0)
+fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+out = cv2.VideoWriter("Output.avi", fourcc, 30.0, (640, 480))
 
 keypoints = []
 PoI = ["NOSE", "LEFT_EYE", "RIGHT_EYE", "LEFT_EAR", "RIGHT_EAR", "LEFT_SHOULDER", "RIGHT_SHOULDER", "MOUTH_LEFT", "MOUTH_RIGHT"]
@@ -22,9 +24,12 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
         lndmrk = np.zeros(27)
         ret, img = cap.read()
 
-        # Recolour to RGB
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img.flags.writeable = False # Save memory before passing to pose estimation
+        # Resize and Recolour to RGB
+        if ret == True:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img.flags.writeable = False # Save memory before passing to pose estimation
+        else:
+            break
 
         # Make detection
         results = pose.process(img)
@@ -50,13 +55,11 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
         mp_drawing.draw_landmarks(img, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
     
         cv2.imshow('Video Feed', img)
+        out.write(img)
         end=time.time()
         time_tracker.append(end - start)
-        # print(end - start) 
 
-        # Plot landmarks
         # mp_drawing.plot_landmarks(results.pose_world_landmarks,  mp_pose.POSE_CONNECTIONS)
-        # close(1)
         
         if cv2.waitKey(1) == 113: # Press q to quit
             break
@@ -67,6 +70,7 @@ np.savetxt("landmark_tracker.csv", np.array(keypoints), delimiter=",",
              "L_Shoulder_x", "L_Shoulder_y", "L_Shoulder_z", "R_Shoulder_x", "R_Shoulder_y", "R_Shoulder_z",\
              "L_Mouth_x", "L_Mouth_y", "L_Mouth_z", "R_Mouth_x", "R_Mouth_y", "R_Mouth_z"]))
 del time_tracker[0]
-print(statistics.mean(time_tracker))
+print(str(1/(statistics.mean(time_tracker))) + "Hz")
 cap.release()
+out.release()
 cv2.destroyAllWindows()
