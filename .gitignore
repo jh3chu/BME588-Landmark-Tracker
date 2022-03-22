@@ -136,3 +136,5 @@ Tracker CSV/*
 0. Archive/*
 *.json
 *.csv
+*.avi
+*.mkv
